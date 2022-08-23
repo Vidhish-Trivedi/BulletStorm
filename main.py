@@ -1,7 +1,7 @@
 import pygame as pg
 import settings as st
 import sys
-from tiles import Tile
+from tiles import Tile, TileForCollision
 from player import Player
 from pytmx.util_pygame import load_pygame
 
@@ -32,6 +32,7 @@ class GameWindow:
 
         # Groups.
         self.all_sprites = AllSprites()
+        self.coll_grp = pg.sprite.Group()
 
         self.setup()
 
@@ -40,9 +41,9 @@ class GameWindow:
         tmx_map = load_pygame('./data/map.tmx')
 
         # Tiles.
-        
+        # Level platforms on which player will move.
         for (x, y, surf) in tmx_map.get_layer_by_name("Level").tiles():
-            Tile((x*64, y*64), surf, self.all_sprites, "Level")
+            TileForCollision((x*64, y*64), surf, [self.all_sprites, self.coll_grp])
 
         for layer in ["BG", "BG Detail", "FG Detail Bottom", "FG Detail Top"]:
             for (x, y, surf) in tmx_map.get_layer_by_name(layer).tiles():
@@ -52,7 +53,7 @@ class GameWindow:
         # Objects.
         for obj in tmx_map.get_layer_by_name("Entities"):
             if(obj.name == "Player"):
-                self.my_player = Player((obj.x, obj.y), "./graphics/player", self.all_sprites)
+                self.my_player = Player((obj.x, obj.y), "./graphics/player", self.all_sprites, self.coll_grp)
 
 
     def runGame(self):
