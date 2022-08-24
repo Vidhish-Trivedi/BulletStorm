@@ -1,7 +1,7 @@
 import pygame as pg
 import settings as st
 import sys
-from tiles import Tile, TileForCollision
+from tiles import Tile, TileForCollision, MovingPlatform
 from player import Player
 from pytmx.util_pygame import load_pygame
 
@@ -33,6 +33,7 @@ class GameWindow:
         # Groups.
         self.all_sprites = AllSprites()
         self.coll_grp = pg.sprite.Group()
+        self.mov_platforms_grp = pg.sprite.Group()
 
         self.setup()
 
@@ -55,6 +56,38 @@ class GameWindow:
             if(obj.name == "Player"):
                 self.my_player = Player((obj.x, obj.y), "./graphics/player", self.all_sprites, self.coll_grp)
 
+        # Moving platforms.
+        self.border_rect_list = []
+        for obj in tmx_map.get_layer_by_name("Platforms"):
+            # Platform
+            if(obj.name == "Platform"):
+                MovingPlatform((obj.x, obj.y), obj.image, [self.all_sprites, self.coll_grp, self.mov_platforms_grp])
+            
+            # Boundary for restricting platform movement.
+            else:
+                border_rect = pg.Rect(obj.x, obj.y, obj.width, obj.height)
+                self.border_rect_list.append(border_rect)
+
+    def platform_restriction(self):
+        for plt in self.mov_platforms_grp.sprites():
+            for border in self.border_rect_list:
+                # Bounce platforms within the borders.
+                if plt.rect.colliderect(border):
+                    if(plt.direction.y < 0):  # Moving up.
+                        plt.rect.top = border.bottom
+                        plt.pos.y = plt.rect.y
+                        plt.direction.y = 1
+                    else:  # Moving down.
+                        plt.rect.bottom = border.top
+                        plt.pos.y = plt.rect.y
+                        plt.direction.y = -1
+            
+            # For fixing glitch when player is below a moving platform and the collide.
+            # Bounce the platform against the player.
+            if(plt.rect.colliderect(self.my_player.rect) and self.my_player.rect.centery > plt.rect.centery):
+                plt.rect.bottom = self.my_player.rect.top
+                plt.pos.y = plt.rect.y
+                plt.direction.y = -1
 
     def runGame(self):
         while(True):
@@ -69,6 +102,8 @@ class GameWindow:
 
             self.display_surface.fill((249, 131, 103))
 
+
+            self.platform_restriction()
 
             self.all_sprites.update(dt)
 

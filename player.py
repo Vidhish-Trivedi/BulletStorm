@@ -29,6 +29,7 @@ class Player(pg.sprite.Sprite):
         self.jump_speed = 1350
         self.on_ground = False  # Can jump only if standing on floor.
         self.ducking = False 
+        self.moving_floor = None  # Later used to fix player to the moving platforms (avoid stutter-like animations).
 
     def get_move_dir(self):
         # Idle and on ground.
@@ -55,6 +56,8 @@ class Player(pg.sprite.Sprite):
             if(sprite.rect.colliderect(rect_below_player)):  # A rectangle which is always below the player overlaps with the floor.
                 if(self.direction.y > 0):  # This overlap is on the bottom side of player.
                     self.on_ground = True  # Means player is on the ground.
+                if hasattr(sprite, "direction"):
+                    self.moving_floor = sprite  # Determine which moving platform the player is on.
 
 
     def import_assets(self, asset_path):
@@ -148,8 +151,17 @@ class Player(pg.sprite.Sprite):
         # Vertical.
         self.direction.y += self.gravity  # Gravitational pull-like effect.    
         self.pos.y += self.direction.y*deltaTime  # Here, self.direction.y incorporates effect of self.speed itself.
+
+        # Fix the player to a moving platform.
+        if(self.moving_floor and self.moving_floor.direction.y > 0 and self.direction.y > 0): # Player is on a platform which is moving down, and the player is not jumping.
+            self.direction.y = 0
+            self.rect.bottom = self.moving_floor.rect.top
+            self.pos.y = self.rect.y
+            self.on_ground = True
+
         self.rect.y = round(self.pos.y)
         self.collision("vertical")
+        self.moving_floor = None  # Reset this attribute when player gets off the moving platform.
     
     def update(self, deltaTime):
         # Save position.
