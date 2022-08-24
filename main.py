@@ -3,6 +3,7 @@ import settings as st
 import sys
 from tiles import Tile, TileForCollision, MovingPlatform
 from player import Player
+from bullet import Bullet
 from pytmx.util_pygame import load_pygame
 
 class AllSprites(pg.sprite.Group):
@@ -34,9 +35,12 @@ class GameWindow:
         self.all_sprites = AllSprites()
         self.coll_grp = pg.sprite.Group()
         self.mov_platforms_grp = pg.sprite.Group()
+        self.bullet_grp = pg.sprite.Group()
 
         self.setup()
 
+        # Bullet Image.
+        self.bullet_surf = pg.image.load('./graphics/bullet.png').convert_alpha()
 
     def setup(self):
         tmx_map = load_pygame('./data/map.tmx')
@@ -54,7 +58,7 @@ class GameWindow:
         # Objects.
         for obj in tmx_map.get_layer_by_name("Entities"):
             if(obj.name == "Player"):
-                self.my_player = Player((obj.x, obj.y), "./graphics/player", self.all_sprites, self.coll_grp)
+                self.my_player = Player((obj.x, obj.y), "./graphics/player", self.all_sprites, self.coll_grp, self.fire_bullet)
 
         # Moving platforms.
         self.border_rect_list = []
@@ -89,6 +93,14 @@ class GameWindow:
                 plt.pos.y = plt.rect.y
                 plt.direction.y = -1
 
+    def fire_bullet(self, position, dir, entity):
+        Bullet(position, self.bullet_surf, dir, [self.all_sprites, self.bullet_grp])
+
+    def bullet_collisions(self):
+        # Obstacles-bullet collisions.
+        for obst in self.coll_grp.sprites():
+            pg.sprite.spritecollide(obst, self.bullet_grp, True)
+
     def runGame(self):
         while(True):
             for event in pg.event.get():
@@ -106,6 +118,8 @@ class GameWindow:
             self.platform_restriction()
 
             self.all_sprites.update(dt)
+
+            self.bullet_collisions()
 
             self.all_sprites.custom_draw(self.my_player)
 

@@ -3,7 +3,7 @@ import settings as st
 from os import walk
 
 class Player(pg.sprite.Sprite):
-    def __init__(self, position, asset_path, groups, coll_sprites):
+    def __init__(self, position, asset_path, groups, coll_sprites, create_bullet):
         super().__init__(groups)
 
         self.import_assets(asset_path)
@@ -30,6 +30,17 @@ class Player(pg.sprite.Sprite):
         self.on_ground = False  # Can jump only if standing on floor.
         self.ducking = False 
         self.moving_floor = None  # Later used to fix player to the moving platforms (avoid stutter-like animations).
+
+        # Bullets.
+        self.fire_bullet = create_bullet
+        self.can_shoot = True
+        self.blt_time = None
+        self.time_bw_shots = 200  # In milliseconds.
+
+    def blt_timer(self):
+        if(not self.can_shoot):
+            if(pg.time.get_ticks() - self.blt_time > self.time_bw_shots):
+                self.can_shoot = True
 
     def get_move_dir(self):
         # Idle and on ground.
@@ -59,7 +70,6 @@ class Player(pg.sprite.Sprite):
                 if hasattr(sprite, "direction"):
                     self.moving_floor = sprite  # Determine which moving platform the player is on.
 
-
     def import_assets(self, asset_path):
         self.animations = {}
     
@@ -81,7 +91,6 @@ class Player(pg.sprite.Sprite):
 
         self.image = self.animations[self.move_dir][int(self.frame_index)]
 
-
     def input(self):
         keys = pg.key.get_pressed()
 
@@ -102,9 +111,24 @@ class Player(pg.sprite.Sprite):
             
         else:
             self.ducking = False
-            
+        
+        if(keys[pg.K_SPACE] and self.can_shoot):
+            if("right" in self.move_dir):
+                blt_dir = pg.math.Vector2(1, 0)
+            else:
+                blt_dir = pg.math.Vector2(-1, 0)
 
-################  NEW METHOD  ################ Check current frame and previous frame positions of both objects (which are both moving).
+            blt_pos = self.rect.center + blt_dir*55
+            if(not self.ducking):
+                y_offset = pg.math.Vector2(0, -15)
+            else:
+                y_offset = pg.math.Vector2(0, 10)
+
+            self.fire_bullet(blt_pos + y_offset, blt_dir, self)
+            self.can_shoot = False
+            self.blt_time = pg.time.get_ticks()
+
+
     def collision(self, dir):
         for sprite in self.coll_obj.sprites():
             if(sprite.rect.colliderect(self.rect)):
@@ -172,3 +196,5 @@ class Player(pg.sprite.Sprite):
         self.move(deltaTime)
         self.check_on_ground()
         self.animate(deltaTime)
+
+        self.blt_timer()
