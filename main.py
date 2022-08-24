@@ -3,7 +3,7 @@ import settings as st
 import sys
 from tiles import Tile, TileForCollision, MovingPlatform
 from player import Player
-from bullet import Bullet
+from bullet import Bullet, BulletAnimation
 from pytmx.util_pygame import load_pygame
 
 class AllSprites(pg.sprite.Group):
@@ -12,10 +12,30 @@ class AllSprites(pg.sprite.Group):
         self.display_surface = pg.display.get_surface()
         self.offset = pg.math.Vector2()
 
+        # Sky images and movement effect.
+        self.sky_fg = pg.image.load('./graphics/sky/fg_sky.png').convert_alpha()  # About 2000 pixels wide.
+        self.sky_bg = pg.image.load('./graphics/sky/bg_sky.png').convert_alpha()  # About 2000 pixels wide.
+
+        # We need to blit these images multiple times to cover the entire level, and also
+        # have some margin outside the level, to avoid black/red window.
+        self.margin = st.WINDOW_WIDTH/2  # As the player is always at center of the window due to camera.
+        tmx_map = load_pygame('./data/map.tmx')
+        map_width = tmx_map.tilewidth*tmx_map.width + 2*self.margin
+        self.sky_width = self.sky_bg.get_width()
+        self.sky_blit_num = int(map_width//self.sky_width)
+
+
     def custom_draw(self, player):
         # Change offset.
         self.offset.x = player.rect.centerx - st.WINDOW_WIDTH/2
         self.offset.y = player.rect.centery - st.WINDOW_HEIGHT/2
+
+        # Offset for sky.
+        for i in range(self.sky_blit_num):
+            pos_x = -self.margin + (i*self.sky_width)
+            # Offset is divided, so sky is offsetted at a different rate than rest of the level, gives a moving effect.
+            self.display_surface.blit(self.sky_bg, (pos_x - (self.offset.x/3), (650 - self.offset.y/3)))
+            self.display_surface.blit(self.sky_fg, (pos_x - (self.offset.x/2), (850 - self.offset.y/2)))
 
         # Blit all sprites.
         for sprite in sorted(self.sprites(), key=lambda sprite: sprite.z):
@@ -39,8 +59,10 @@ class GameWindow:
 
         self.setup()
 
-        # Bullet Image.
+        # Bullet image and animations.
         self.bullet_surf = pg.image.load('./graphics/bullet.png').convert_alpha()
+        self.fire_surfs = [pg.image.load('./graphics/fire/0.png').convert_alpha(), pg.image.load('./graphics/fire/1.png').convert_alpha()]
+
 
     def setup(self):
         tmx_map = load_pygame('./data/map.tmx')
@@ -93,8 +115,9 @@ class GameWindow:
                 plt.pos.y = plt.rect.y
                 plt.direction.y = -1
 
-    def fire_bullet(self, position, dir, entity):
+    def fire_bullet(self, position, dir, shooter):
         Bullet(position, self.bullet_surf, dir, [self.all_sprites, self.bullet_grp])
+        BulletAnimation(entity=shooter, surface_list=self.fire_surfs, dir=dir, groups=self.all_sprites)
 
     def bullet_collisions(self):
         # Obstacles-bullet collisions.
