@@ -3,6 +3,7 @@ import settings as st
 import sys
 from tiles import Tile, TileForCollision, MovingPlatform
 from player import Player
+from enemy import Enemy
 from bullet import Bullet, BulletAnimation
 from pytmx.util_pygame import load_pygame
 
@@ -81,6 +82,10 @@ class GameWindow:
         for obj in tmx_map.get_layer_by_name("Entities"):
             if(obj.name == "Player"):
                 self.my_player = Player((obj.x, obj.y), "./graphics/player", self.all_sprites, self.coll_grp, self.fire_bullet)
+            
+            elif(obj.name == "Enemy"):
+                Enemy((obj.x, obj.y), "./graphics/enemy", self.all_sprites, self.fire_bullet, self.my_player, coll_sprites=self.coll_grp)  # None for now.
+
 
         # Moving platforms.
         self.border_rect_list = []

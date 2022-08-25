@@ -1,46 +1,20 @@
 import pygame as pg
 import settings as st
 from os import walk
+from entity import Entity
 
-class Player(pg.sprite.Sprite):
+class Player(Entity):
     def __init__(self, position, asset_path, groups, coll_sprites, create_bullet):
-        super().__init__(groups)
-
-        self.import_assets(asset_path)
-        self.frame_index = 0
-        self.move_dir = "right"
-
-        self.image = self.animations[self.move_dir][self.frame_index]
-        self.rect = self.image.get_rect(topleft=position)
-        self.z = st.LAYERS["Level"]
-
-        # Float based movement.
-        self.pos = pg.math.Vector2(self.rect.topleft)
-        self.direction = pg.math.Vector2()
-        self.speed = 400
+        super().__init__(position=position, asset_path=asset_path, groups=groups, create_bullet=create_bullet)
 
         # Collisions.
-        # Store prev. position.
-        self.prev_rect = self.rect.copy()
         self.coll_obj = coll_sprites
 
         # Jumping/Falling.
         self.gravity = 15  # determines how fast the player falls.
         self.jump_speed = 1350
-        self.on_ground = False  # Can jump only if standing on floor.
-        self.ducking = False 
+        self.on_ground = False  # Can jump only if standing on floor. 
         self.moving_floor = None  # Later used to fix player to the moving platforms (avoid stutter-like animations).
-
-        # Bullets.
-        self.fire_bullet = create_bullet
-        self.can_shoot = True
-        self.blt_time = None
-        self.time_bw_shots = 200  # In milliseconds.
-
-    def blt_timer(self):
-        if(not self.can_shoot):
-            if(pg.time.get_ticks() - self.blt_time > self.time_bw_shots):
-                self.can_shoot = True
 
     def get_move_dir(self):
         # Idle and on ground.
@@ -69,27 +43,6 @@ class Player(pg.sprite.Sprite):
                     self.on_ground = True  # Means player is on the ground.
                 if hasattr(sprite, "direction"):
                     self.moving_floor = sprite  # Determine which moving platform the player is on.
-
-    def import_assets(self, asset_path):
-        self.animations = {}
-    
-        for (index, folder) in enumerate(walk(asset_path)):
-            if(index == 0):
-                for subfolder in folder[1]:
-                    self.animations[subfolder] = []
-            else:
-                img_path = asset_path + "/" + folder[0].split("\\")[1]
-                for img in sorted(folder[2], key=lambda string: int(string.split(".")[0])):
-                    surf = pg.image.load(f"{img_path}/{img}").convert_alpha()
-                    self.animations[folder[0].split("\\")[1]].append(surf)
-
-    def animate(self, deltaTime):
-        self.frame_index += 7*deltaTime
-
-        if(self.frame_index >= len(self.animations[self.move_dir])):
-            self.frame_index = 0
-
-        self.image = self.animations[self.move_dir][int(self.frame_index)]
 
     def input(self):
         keys = pg.key.get_pressed()
@@ -128,7 +81,6 @@ class Player(pg.sprite.Sprite):
             self.can_shoot = False
             self.blt_time = pg.time.get_ticks()
 
-
     def collision(self, dir):
         for sprite in self.coll_obj.sprites():
             if(sprite.rect.colliderect(self.rect)):
@@ -161,7 +113,6 @@ class Player(pg.sprite.Sprite):
         
         if(self.on_ground and self.direction.y != 0):  # Player is supposedly on the ground, but moving in y-direction ==> CONTRA-DICTION!
             self.on_ground = False
-##########################################################################################################################################
 
     def move(self, deltaTime):
         if(self.ducking and self.on_ground):  # Player can not move when ducking, but can change self.move_dir
