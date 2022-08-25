@@ -5,6 +5,7 @@ from tiles import Tile, TileForCollision, MovingPlatform
 from player import Player
 from enemy import Enemy
 from bullet import Bullet, BulletAnimation
+from health import Health
 from pytmx.util_pygame import load_pygame
 
 class AllSprites(pg.sprite.Group):
@@ -44,7 +45,6 @@ class AllSprites(pg.sprite.Group):
             offset_rect.center -= self.offset
             self.display_surface.blit(sprite.image, offset_rect)
 
-
 class GameWindow:
     def __init__(self):
         pg.init()
@@ -61,10 +61,15 @@ class GameWindow:
 
         self.setup()
 
+        self.health_bar = Health(self.my_player)
+
         # Bullet image and animations.
         self.bullet_surf = pg.image.load('./graphics/bullet.png').convert_alpha()
         self.fire_surfs = [pg.image.load('./graphics/fire/0.png').convert_alpha(), pg.image.load('./graphics/fire/1.png').convert_alpha()]
 
+        # Music.
+        self.bg_music = pg.mixer.Sound('./audio/music.wav')
+        self.bg_music.play(loops=-1)
 
     def setup(self):
         tmx_map = load_pygame('./data/map.tmx')
@@ -140,7 +145,7 @@ class GameWindow:
             for event in pg.event.get():
                 if(event.type == pg.QUIT):
                     pg.quit()
-                    print("Game CLosed!")
+                    print("Game Closed!")
                     sys.exit()
         
 
@@ -156,6 +161,7 @@ class GameWindow:
             self.bullet_collisions()
 
             self.all_sprites.custom_draw(self.my_player)
+            self.health_bar.display_health()
 
             pg.display.update()
 

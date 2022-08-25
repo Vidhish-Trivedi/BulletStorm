@@ -40,6 +40,12 @@ class Entity(pg.sprite.Sprite):
         self.vulnerable = True
         self.time_last_hit = None
 
+        # Music.
+        self.hit_sound = pg.mixer.Sound('./audio/hit.wav')
+        self.hit_sound.set_volume(0.2)
+        self.fire_sound = pg.mixer.Sound('./audio/bullet.wav')
+        self.fire_sound.set_volume(0.2)
+
     def blink(self):
         if(not self.vulnerable and self.wave_val()):
             mask = pg.mask.from_surface(self.image)
@@ -63,6 +69,7 @@ class Entity(pg.sprite.Sprite):
             self.vulnerable = False
             self.health -= 1
             self.time_last_hit = pg.time.get_ticks()
+            self.hit_sound.play()
 
     def animate(self, deltaTime):
         self.frame_index += 7*deltaTime

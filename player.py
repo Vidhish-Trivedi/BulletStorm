@@ -92,6 +92,7 @@ class Player(Entity):
             self.fire_bullet(blt_pos + y_offset, blt_dir, self)
             self.can_shoot = False
             self.blt_time = pg.time.get_ticks()
+            self.fire_sound.play()
 
     def collision(self, dir):
         for sprite in self.coll_obj.sprites():

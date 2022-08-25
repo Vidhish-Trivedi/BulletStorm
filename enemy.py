@@ -7,7 +7,7 @@ class Enemy(Entity):
         super().__init__(position=position, asset_path=asset_path, groups=groups, create_bullet=create_bullet)
 
         # Overwrites.
-        self.time_bw_shots = 500  # Enemies will fire slower than the player.
+        self.time_bw_shots = 700  # Enemies will fire slower than the player.
 
         self.player = player
 
@@ -48,6 +48,7 @@ class Enemy(Entity):
 
             self.can_shoot = False
             self.blt_time = pg.time.get_ticks()
+            self.fire_sound.play()
     
     def update(self, deltaTime):
         self.get_face_dir()
