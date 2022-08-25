@@ -42,7 +42,7 @@ class Enemy(Entity):
 
             y_offset = pg.math.Vector2(0, -15)
 
-            blt_pos = self.rect.center + blt_dir*55
+            blt_pos = self.rect.center + blt_dir*60
 
             self.fire_bullet(blt_pos + y_offset, blt_dir, self)
 
@@ -51,7 +51,11 @@ class Enemy(Entity):
     
     def update(self, deltaTime):
         self.get_face_dir()
+
         self.animate(deltaTime)
+        self.blink()
 
         self.blt_timer()
+        self.invulnerable_timer()
         self.should_fire()
+        self.check_alive()

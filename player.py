@@ -2,19 +2,31 @@ import pygame as pg
 import settings as st
 from os import walk
 from entity import Entity
+import sys
 
 class Player(Entity):
     def __init__(self, position, asset_path, groups, coll_sprites, create_bullet):
         super().__init__(position=position, asset_path=asset_path, groups=groups, create_bullet=create_bullet)
+
+        # Overwrites.
+        self.health = 10
 
         # Collisions.
         self.coll_obj = coll_sprites
 
         # Jumping/Falling.
         self.gravity = 15  # determines how fast the player falls.
-        self.jump_speed = 1350
+        self.jump_speed = 1200
         self.on_ground = False  # Can jump only if standing on floor. 
         self.moving_floor = None  # Later used to fix player to the moving platforms (avoid stutter-like animations).
+
+    # Overwrite.
+    def check_alive(self):
+        if(self.health <= 0):
+            self.kill()
+            pg.quit()
+            print("Game Over!")
+            sys.exit()
 
     def get_move_dir(self):
         # Idle and on ground.
@@ -71,7 +83,7 @@ class Player(Entity):
             else:
                 blt_dir = pg.math.Vector2(-1, 0)
 
-            blt_pos = self.rect.center + blt_dir*55
+            blt_pos = self.rect.center + blt_dir*60
             if(not self.ducking):
                 y_offset = pg.math.Vector2(0, -15)
             else:
@@ -146,6 +158,10 @@ class Player(Entity):
         self.get_move_dir()
         self.move(deltaTime)
         self.check_on_ground()
+        
         self.animate(deltaTime)
+        self.blink()
 
         self.blt_timer()
+        self.invulnerable_timer()
+        self.check_alive()

@@ -1,6 +1,7 @@
 import pygame as pg
 import settings as st
 from os import walk
+from math import sin
 
 # Parent class for player and enemies.
 class Entity(pg.sprite.Sprite):
@@ -19,6 +20,8 @@ class Entity(pg.sprite.Sprite):
         self.prev_rect = self.rect.copy()
         self.z = st.LAYERS["Level"]
 
+        self.mask = pg.mask.from_surface(self.image)
+
         # Float based movement.
         self.pos = pg.math.Vector2(self.rect.topleft)
         self.direction = pg.math.Vector2()
@@ -32,6 +35,35 @@ class Entity(pg.sprite.Sprite):
         self.blt_time = None
         self.time_bw_shots = 300  # In milliseconds.
 
+        # Health.
+        self.health = 3
+        self.vulnerable = True
+        self.time_last_hit = None
+
+    def blink(self):
+        if(not self.vulnerable and self.wave_val()):
+            mask = pg.mask.from_surface(self.image)
+            white_surf = mask.to_surface()
+            white_surf.set_colorkey((0, 0, 0))
+            self.image = white_surf
+
+    def wave_val(self):
+        val = sin(pg.time.get_ticks())      
+        if(val >= 0):
+            return(True)
+        else:
+            return(False)  
+    
+    def check_alive(self):
+        if(self.health <= 0):
+            self.kill()
+
+    def damage(self):
+        if(self.vulnerable):
+            self.vulnerable = False
+            self.health -= 1
+            self.time_last_hit = pg.time.get_ticks()
+
     def animate(self, deltaTime):
         self.frame_index += 7*deltaTime
 
@@ -39,11 +71,17 @@ class Entity(pg.sprite.Sprite):
             self.frame_index = 0
 
         self.image = self.animations[self.move_dir][int(self.frame_index)]
+        self.mask = pg.mask.from_surface(self.image)
 
     def blt_timer(self):
         if(not self.can_shoot):
             if(pg.time.get_ticks() - self.blt_time > self.time_bw_shots):
                 self.can_shoot = True
+
+    def invulnerable_timer(self):
+        if(not self.vulnerable):
+            if(pg.time.get_ticks() - self.time_last_hit > 500):  # 500 milliseconds is threshold for time between shots.
+                self.vulnerable = True
 
     def import_assets(self, asset_path):
         self.animations = {}

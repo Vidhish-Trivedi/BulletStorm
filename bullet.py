@@ -13,6 +13,7 @@ class Bullet(pg.sprite.Sprite):
             self.image = pg.transform.flip(self.image, True, False)
         
         self.rect = self.image.get_rect(center=position)
+        self.mask = pg.mask.from_surface(self.image)
 
         # Float based movement.
         self.direction = dir

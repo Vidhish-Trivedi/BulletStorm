@@ -57,6 +57,7 @@ class GameWindow:
         self.coll_grp = pg.sprite.Group()
         self.mov_platforms_grp = pg.sprite.Group()
         self.bullet_grp = pg.sprite.Group()
+        self.vulnerable_grp = pg.sprite.Group()
 
         self.setup()
 
@@ -81,10 +82,10 @@ class GameWindow:
         # Objects.
         for obj in tmx_map.get_layer_by_name("Entities"):
             if(obj.name == "Player"):
-                self.my_player = Player((obj.x, obj.y), "./graphics/player", self.all_sprites, self.coll_grp, self.fire_bullet)
+                self.my_player = Player((obj.x, obj.y), "./graphics/player", [self.all_sprites, self.vulnerable_grp], self.coll_grp, self.fire_bullet)
             
             elif(obj.name == "Enemy"):
-                Enemy((obj.x, obj.y), "./graphics/enemy", self.all_sprites, self.fire_bullet, self.my_player, coll_sprites=self.coll_grp)  # None for now.
+                Enemy((obj.x, obj.y), "./graphics/enemy", [self.all_sprites, self.vulnerable_grp], self.fire_bullet, self.my_player, coll_sprites=self.coll_grp)
 
 
         # Moving platforms.
@@ -128,6 +129,11 @@ class GameWindow:
         # Obstacles-bullet collisions.
         for obst in self.coll_grp.sprites():
             pg.sprite.spritecollide(obst, self.bullet_grp, True)
+        
+        # Entity-bullet collisions.
+        for sprite in self.vulnerable_grp.sprites():
+            if(pg.sprite.spritecollide(sprite, self.bullet_grp, True, pg.sprite.collide_mask)):
+               sprite.damage() 
 
     def runGame(self):
         while(True):
