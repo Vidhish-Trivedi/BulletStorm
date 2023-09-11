@@ -2,7 +2,7 @@
 - This project is a single-level clone of the classic game `Contra`.
 
 # Object-Oriented Design
-- The following class diagrams describes the major classes with their important attributes and methods.
+- The following class diagram describes the major classes with their important attributes and methods.
 
 ```mermaid
 	classDiagram
