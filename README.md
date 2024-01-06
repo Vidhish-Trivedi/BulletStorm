@@ -1,4 +1,4 @@
-# Contra-PyGame
+# BulletStorm
 - This project is a single-level clone of the classic game `Contra`.
 
 # Object-Oriented Design
